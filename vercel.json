@@ -1,0 +1,5 @@
+{
+  "redirects": [
+    { "source": "/index_with_paraphrasing.html", "destination": "/", "permanent": true }
+  ]
+}
