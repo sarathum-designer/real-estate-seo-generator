@@ -16,4 +16,12 @@ HTML · CSS · JavaScript · LLM API · Vercel
 
 ## Run locally
 
-Open `index_with_paraphrasing.html` in a browser.
+Open `index.html` in a browser.
+
+## Project structure
+
+```text
+index.html      Page markup
+css/styles.css  Styles
+js/app.js       Generator and paraphrasing logic
+```
