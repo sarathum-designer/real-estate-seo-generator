@@ -25,3 +25,7 @@ index.html      Page markup
 css/styles.css  Styles
 js/app.js       Generator and paraphrasing logic
 ```
+
+## Also in this repo: Kendra (GCC ecosystem prototype)
+
+`gcc/` holds a strategy deck and a working prototype for an evidence ledger of India's Global Capability Centres. See [gcc/README.md](gcc/README.md).

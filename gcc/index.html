@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kendra GCC Ledger</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Layout: left rail of views + one working canvas; every fact is a chip that opens its evidence. */
+:root{
+  --bg:#f4f5f2; --panel:#ffffff; --ink:#15202b; --muted:#56606b; --line:#dfe2dc; --soft:#eceee9;
+  --accent:#2f47c9; --accent-ink:#ffffff; --accent-soft:#e6e9fb;
+  --ok:#1d7a52; --ok-soft:#e1f2ea; --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#b03a2e; --bad-soft:#f8e3e0;
+  --signal:#b4570f; --signal-soft:#fbeadb;
+  --serif:"Source Serif 4", Georgia, serif; --sans:"IBM Plex Sans", "Segoe UI", Arial, sans-serif; --mono:"IBM Plex Mono", Consolas, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --panel:#161e26; --ink:#e7ebee; --muted:#9aa5af; --line:#2a3540; --soft:#1d2731;
+  --accent:#8c9cff; --accent-ink:#0f151b; --accent-soft:#232c55;
+  --ok:#5fcf9b; --ok-soft:#173528; --warn:#f0b45a; --warn-soft:#3a2c14; --bad:#f08a7e; --bad-soft:#3d1f1b;
+  --signal:#f3a35f; --signal-soft:#3a2614; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --panel:#161e26; --ink:#e7ebee; --muted:#9aa5af; --line:#2a3540; --soft:#1d2731;
+  --accent:#8c9cff; --accent-ink:#0f151b; --accent-soft:#232c55;
+  --ok:#5fcf9b; --ok-soft:#173528; --warn:#f0b45a; --warn-soft:#3a2c14; --bad:#f08a7e; --bad-soft:#3d1f1b;
+  --signal:#f3a35f; --signal-soft:#3a2614; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+nav.rail{background:var(--panel);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
+.brand{display:flex;flex-direction:column;gap:2px;padding:0 8px}
+.brand b{font:600 24px/1.1 var(--serif);letter-spacing:-.01em}
+.brand span{font-size:12px;color:var(--muted)}
+.navlist{display:flex;flex-direction:column;gap:2px}
+.navlist button{all:unset;cursor:pointer;padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-weight:500}
+.navlist button:hover{background:var(--soft);color:var(--ink)}
+.navlist button[aria-current="page"]{background:var(--accent-soft);color:var(--ink)}
+.navlist small{font:12px var(--mono);color:var(--muted)}
+.railnote{margin-top:auto;font-size:12px;color:var(--muted);padding:10px;border:1px dashed var(--line);border-radius:8px}
+main{padding:28px clamp(16px,3vw,40px) 64px;min-width:0;display:flex;flex-direction:column;gap:22px}
+h1{font:600 clamp(26px,3.2vw,36px)/1.15 var(--serif);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 20px/1.25 var(--serif);margin:0;text-wrap:balance}
+h3{font:600 15px/1.3 var(--sans);margin:0}
+p{margin:0}
+.lede{color:var(--muted);max-width:72ch}
+.eyebrow{font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.stack{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.num{font:600 30px/1 var(--serif);font-variant-numeric:tabular-nums}
+.k{font-size:12px;color:var(--muted)}
+.mono{font-family:var(--mono);font-size:13px}
+.muted{color:var(--muted)}
+.tag{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:500;background:var(--soft);color:var(--ink);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)} .tag.warn{background:var(--warn-soft);color:var(--warn)} .tag.bad{background:var(--bad-soft);color:var(--bad)} .tag.sig{background:var(--signal-soft);color:var(--signal)} .tag.acc{background:var(--accent-soft);color:var(--accent)}
+.btn{cursor:pointer;border:1px solid var(--line);background:var(--panel);padding:7px 12px;border-radius:8px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.55;cursor:default}
+input[type=text],input[type=password],select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+textarea{width:100%;resize:vertical}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+td:first-child{min-width:150px}
+th{font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--soft);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr.click{cursor:pointer} tbody tr.click:hover{background:var(--soft)}
+.bar{height:8px;border-radius:4px;background:var(--soft);overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.conf{display:inline-flex;gap:2px;vertical-align:middle}
+.conf i{width:6px;height:12px;border-radius:2px;background:var(--line)}
+.conf i.on{background:var(--ok)}
+.conf.mid i.on{background:var(--warn)} .conf.low i.on{background:var(--bad)}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:13px}
+.banner b{color:var(--warn)}
+.est{display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(0,3fr) 70px;gap:10px;align-items:center;font-size:14px}
+.est .track{position:relative;height:22px;background:var(--soft);border-radius:4px}
+.est .fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent-soft);border-right:3px solid var(--accent)}
+.est.fc .fill{background:repeating-linear-gradient(45deg,var(--soft),var(--soft) 4px,var(--line) 4px,var(--line) 8px);border-right-color:var(--muted)}
+.est .v{text-align:right;font:500 14px var(--mono)}
+.drawer{position:fixed;inset:0 0 0 auto;width:min(560px,100%);background:var(--panel);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.12);padding:22px;overflow-y:auto;z-index:20;display:flex;flex-direction:column;gap:16px;padding-top:calc(22px + env(safe-area-inset-top,0px))}
+.scrim{position:fixed;inset:0;background:rgba(10,15,20,.35);z-index:19}
+.claim{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.claim:last-child{border-bottom:none}
+.claim .src{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chat{display:flex;flex-direction:column;gap:12px;max-height:520px;overflow-y:auto;padding-right:4px}
+.msg{padding:12px 14px;border-radius:10px;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
+.msg.a{align-self:flex-start;background:var(--soft)}
+.msg.a .trace{display:block;margin-top:8px;font:12px var(--mono);color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px;font-size:13px}
+.chip:hover{border-color:var(--accent)}
+.slider{display:grid;grid-template-columns:140px minmax(0,1fr) 30px;gap:8px;align-items:center;font-size:13px}
+.pipeline{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
+.pipeline div{flex:1 1 130px;background:var(--soft);border-radius:8px;padding:10px;font-size:13px}
+.pipeline b{display:block;font:500 12px var(--mono);color:var(--accent);margin-bottom:2px}
+.diff{border-left:3px solid var(--line);padding:6px 10px;font-size:14px}
+.diff.new{border-color:var(--ok)} .diff.same{border-color:var(--accent)} .diff.conflict{border-color:var(--bad)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.statusline{font:12px var(--mono);color:var(--muted)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+@media (max-width:900px){.app{grid-template-columns:1fr} nav.rail{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)} .navlist{flex-direction:row;flex-wrap:wrap} .railnote{display:none} .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr} .est{grid-template-columns:1fr 60px} .est .track{grid-column:1/-1;order:3} .claim{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.panel,.drawer{transition:border-color .15s}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Views">
+    <div class="brand"><b>Kendra</b><span>The evidence ledger for India's GCCs</span></div>
+    <div class="navlist" id="nav"></div>
+    <div class="railnote"><b>Prototype.</b> Market figures are cited public reports. Company, provider and signal records are fictional sample data that show how the pipeline works.</div>
+  </nav>
+  <main id="view" tabindex="-1"></main>
+</div>
+<div id="drawerHost"></div>
+
+<script>
+"use strict";
+/* ---------------------------------------------------------------- *
+ *  1. MARKET DATA (real, cited)                                     *
+ * ---------------------------------------------------------------- */
+const ESTIMATES = [
+  {src:"Nasscom–Zinnov", when:"Mid-2023 (FY23)", value:1580, unit:"GCCs (companies)", note:"1.66M employees", kind:"actual"},
+  {src:"Nasscom–Zinnov", when:"Sep 2024 (FY24)", value:1700, unit:"GCCs, '1,700+'", note:"1.9M employees · $64.6B revenue", kind:"actual"},
+  {src:"ANSR", when:"2026 emerging-cities report", value:1900, unit:"GCCs, '1,900+'", note:"2.1M+ professionals", kind:"actual"},
+  {src:"Nasscom–Zinnov (as reported)", when:"FY26", value:2117, unit:"GCCs (companies)", note:"2.36M professionals · $98.4B revenue", kind:"actual"},
+  {src:"Nasscom–Zinnov (as reported)", when:"FY26", value:3728, unit:"centres (physical units)", note:"same study, different unit", kind:"actual"},
+  {src:"Nasscom–Zinnov forecast", when:"made Sep 2024, for 2030", value:2200, unit:"GCCs (upper bound)", note:"passed in FY26, four years early", kind:"forecast"},
+  {src:"EY forecast", when:"made Jun 2023, for 2030", value:2550, unit:"GCCs (upper bound of 2,400–2,550)", note:"base case 2,400", kind:"forecast"},
+];
+const SOURCES = {
+  nz24:{label:"Nasscom–Zinnov GCC Landscape, Sep 2024", url:"https://theprint.in/economy/indias-position-as-gcc-capital-of-the-world-nasscom-zinnov-study/2268673/"},
+  nz26:{label:"Nasscom–Zinnov FY26 figures as reported", url:"https://visionias.in/current-affairs/news-today/2026-05-09/economy/global-capability-centres-gccs-in-india-cross-2100-mark"},
+  ey:{label:"EY India GCC press release, Jun 2023", url:"https://www.ey.com/en_in/newsroom/2023/06/india-gcc-market-size-to-reach-us-dollor-110b-by-2030"},
+  ansr:{label:"ANSR, India's Most GCC-Ready Emerging Cities 2026", url:"https://ansr.com/ebooks/indias-most-gcc-ready-emerging-cities-for-2026/"},
+  icra:{label:"ICRA via Realty Today: GCC leasing FY23–25", url:"https://therealtytoday.com/news/market-insights/gccs-to-drive-40-of-office-space-demand-in-indias-top-6-cities-with-5055-msf-leasing-icra/"},
+  anarock:{label:"ANAROCK via IANS: GCCs 45% of H1 2026 leasing", url:"https://ianslive.in/gccs-account-for-45-pc-of-gross-office-leasing-in-india-during-jan-june--20260717163137"},
+  ka:{label:"State GCC policy summaries (law.asia)", url:"https://law.asia/india-gcc-growth/"},
+  mh:{label:"Maharashtra GCC Policy (Mondaq)", url:"https://webiis08.mondaq.com/india/industry-updates-analysis/1705680/impetus-to-gccs-in-india-maharashtra-releases-its-gcc-policy"},
+  od:{label:"Odisha GCC Policy (Mondaq)", url:"https://webiis08.mondaq.com/india/contracts-and-commercial-law/1749448/impetus-to-gccs-in-india-odisha-releases-its-gcc-policy"},
+  rj:{label:"Rajasthan GCC Policy (Khaitan & Co, Dec 2025)", url:"https://www.khaitanco.com/sites/default/files/2025-12/Ergo%20-%20Impetus%20to%20GCCs%20in%20India%20-%20Rajasthan%20releases%20its%20GCC%20Policy%20-%2016%20December%202025.pdf"},
+};
+/* Cities. leasingShare = ICRA FY23–25 share of GCC leasing (only where the source states it).
+   rent = indicative Grade A range, Rs/sq ft/month: Kendra working estimate, low confidence until broker data is ingested.
+   talent/cost/infra = 1–5 analyst scores used by the fit model; shown as scores, never as facts. */
+const CITIES = [
+  {id:"blr", name:"Bengaluru", state:"Karnataka", tier:1, leasingShare:40, rent:[85,140], talent:5, cost:2, infra:4, maturity:5, policy:"ka"},
+  {id:"hyd", name:"Hyderabad", state:"Telangana", tier:1, leasingShare:18, rent:[65,95], talent:5, cost:3, infra:5, maturity:5, policy:"tg"},
+  {id:"maa", name:"Chennai", state:"Tamil Nadu", tier:1, leasingShare:16, rent:[60,90], talent:4, cost:3, infra:4, maturity:4, policy:"tn"},
+  {id:"pnq", name:"Pune", state:"Maharashtra", tier:1, leasingShare:null, rent:[75,110], talent:4, cost:3, infra:3, maturity:4, policy:"mh"},
+  {id:"ncr", name:"Delhi NCR", state:"Haryana / UP", tier:1, leasingShare:null, rent:[75,125], talent:4, cost:3, infra:4, maturity:4, policy:"hr"},
+  {id:"bom", name:"Mumbai", state:"Maharashtra", tier:1, leasingShare:null, rent:[130,250], talent:4, cost:1, infra:3, maturity:4, policy:"mh"},
+  {id:"amd", name:"Ahmedabad / GIFT", state:"Gujarat", tier:2, leasingShare:null, rent:[45,70], talent:3, cost:4, infra:4, maturity:2, policy:"gj"},
+  {id:"cjb", name:"Coimbatore", state:"Tamil Nadu", tier:2, leasingShare:null, rent:[40,60], talent:3, cost:5, infra:3, maturity:2, policy:"tn"},
+  {id:"cok", name:"Kochi", state:"Kerala", tier:2, leasingShare:null, rent:[45,65], talent:3, cost:5, infra:3, maturity:2, policy:"kl"},
+  {id:"idr", name:"Indore", state:"Madhya Pradesh", tier:2, leasingShare:null, rent:[35,55], talent:2, cost:5, infra:3, maturity:1, policy:"mp"},
+  {id:"jai", name:"Jaipur", state:"Rajasthan", tier:2, leasingShare:null, rent:[40,55], talent:2, cost:5, infra:3, maturity:1, policy:"rj"},
+  {id:"bbi", name:"Bhubaneswar", state:"Odisha", tier:2, leasingShare:null, rent:[35,50], talent:2, cost:5, infra:3, maturity:1, policy:"od"},
+];
+const POLICIES = {
+  ka:{name:"Karnataka GCC Policy 2024–29", status:"GCC-specific", detail:"Targets 500 new GCCs and 3.5 lakh jobs by 2029. Reported: R&D grants up to Rs 50 crore, rental reimbursement up to 50%, EPF support, 45-day approvals.", src:"ka"},
+  mh:{name:"Maharashtra GCC Policy 2025", status:"GCC-specific", detail:"State GCC policy with fiscal and non-fiscal incentives; check the notified text for thresholds.", src:"mh"},
+  gj:{name:"Gujarat GCC Policy 2025–30", status:"GCC-specific", detail:"Capital and payroll support tied to the GIFT City ecosystem; pushes AI and R&D, and tier-2 expansion.", src:"ka"},
+  mp:{name:"Madhya Pradesh GCC Policy 2025", status:"GCC-specific", detail:"Launched 14 Feb 2025. Targets 50+ GCCs and 37,000 direct jobs. Capital, R&D, rent and payroll support; MPSeDC is the nodal agency.", src:"ka"},
+  hr:{name:"Haryana GCC Policy 2025 · UP (Invest UP)", status:"GCC-specific", detail:"NCR spans two states. UP offers land, capex/opex support and payroll rebates for Noida, Lucknow and others.", src:"ka"},
+  od:{name:"Odisha GCC Policy", status:"GCC-specific", detail:"State GCC policy released; see notified text for incentive schedule.", src:"od"},
+  rj:{name:"Rajasthan GCC Policy (Dec 2025)", status:"GCC-specific", detail:"Released December 2025; incentive terms per the notified policy.", src:"rj"},
+  tg:{name:"Telangana ICT policy", status:"General IT policy", detail:"No GCC-specific policy captured yet. Kendra marks this as a gap to verify, not as 'no incentives'.", src:null},
+  tn:{name:"Tamil Nadu IT/ITeS policy", status:"General IT policy", detail:"GCC-specific terms not yet captured in the ledger. Marked as a gap to verify.", src:null},
+  kl:{name:"Kerala IT policy", status:"General IT policy", detail:"GCC-specific terms not yet captured in the ledger. Marked as a gap to verify.", src:null},
+};
+
+/* ---------------------------------------------------------------- *
+ *  2. SAMPLE LEDGER (fictional entities, deterministic)             *
+ * ---------------------------------------------------------------- */
+let seed = 20261012;
+const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+const pick = a => a[Math.floor(rnd() * a.length)];
+const COMPANIES = [
+  ["Halvorsen Logistics","Norway","Logistics"],["Brightwater Insurance","US","Insurance"],["Kessler Medtech","Germany","Healthcare"],
+  ["Orchard Retail Group","UK","Retail"],["Tamsin Bank","UK","BFSI"],["Arclight Semiconductors","US","Semiconductors"],
+  ["Pemberton Foods","US","CPG"],["Vireo Energy","Netherlands","Energy"],["Calder Re","Switzerland","Insurance"],
+  ["Northgate Capital","US","BFSI"],["Lumen Pharma","Belgium","Pharma"],["Strand Automotive","Germany","Automotive"],
+  ["Quayside Telecom","Australia","Telecom"],["Meridian Airlines","Singapore","Aviation"],["Fenwick Analytics","US","Software"],
+  ["Ostara Chemicals","Germany","Chemicals"],["Bellwood Health","US","Healthcare"],["Corvane Payments","US","Fintech"],
+  ["Sitka Outdoor","US","Retail"],["Halden Shipping","Denmark","Logistics"],["Ravel Media","France","Media"],
+  ["Tidewell Utilities","UK","Energy"],["Ansel Robotics","Japan","Industrial"],["Greyfield Asset Mgmt","US","BFSI"],
+  ["Morrow Pharmacy","US","Healthcare"],["Ilex Software","Israel","Software"],["Cobalt Mining Co","Canada","Mining"],
+  ["Dunmore Bank","Ireland","BFSI"],["Saffi Cosmetics","France","CPG"],["Penrose Aerospace","US","Aerospace"],
+  ["Westbrook Telecom","US","Telecom"],["Nordvik Engineering","Sweden","Industrial"],["Lyra Travel","Spain","Travel"],
+  ["Kestrel Insurance","Canada","Insurance"],["Amberline Retail","US","Retail"],["Tovey Construction","UK","Construction"],
+  ["Pallas Diagnostics","US","Healthcare"],["Eastmere Bank","Singapore","BFSI"],["Rookwood Gaming","US","Media"],
+  ["Solano Agritech","Brazil","Agri"],["Fairhaven Hotels","US","Hospitality"],["Glenmoor Pensions","UK","BFSI"],
+];
+const FUNCS = ["Technology","Engineering R&D","Finance & Accounting","Analytics & AI","Operations","Cybersecurity","HR shared services","Product"];
+const SRC_TYPES = {
+  mca:{label:"MCA filing", weight:.9}, stpi:{label:"STPI/SEZ approval", weight:.85}, press:{label:"Company press release", weight:.75},
+  news:{label:"News report", weight:.55}, jobs:{label:"Job postings", weight:.6}, lease:{label:"Lease transaction", weight:.8},
+  linkedin:{label:"Headcount signal", weight:.5}, state:{label:"State govt MoU", weight:.7}, provider:{label:"Provider claim", weight:.35},
+};
+const HC_BANDS = ["<100","100–500","500–1,000","1,000–3,000","3,000+"];
+const ENTITIES = COMPANIES.map(([name,hq,ind], i) => {
+  const statusRoll = rnd();
+  const status = i < 30 ? "Operating" : (i < 36 ? "Announced" : "Pre-entry signal");
+  const nCities = status === "Operating" ? 1 + Math.floor(rnd()*(rnd()<.3?3:1.5)) : 1;
+  const cityPool = rnd() < .75 ? CITIES.filter(c=>c.tier===1) : CITIES;
+  const cities = [...new Set(Array.from({length:nCities},()=>pick(cityPool).id))];
+  const funcs = [...new Set([pick(FUNCS), rnd()<.6?pick(FUNCS):null].filter(Boolean))];
+  const band = status === "Operating" ? Math.min(4, Math.floor(rnd()*4.6)) : 0;
+  const year = status === "Operating" ? 2008 + Math.floor(rnd()*17) : 2026;
+  const legal = name.split(" ")[0] + (rnd()<.5?" Global Services India Pvt Ltd":" Technology Centre India Pvt Ltd");
+  const aliases = [legal, name + " India", name.split(" ")[0].slice(0,3).toUpperCase() + " " + (rnd()<.5?"GCC":"Hub")];
+  // Claims: each fact with its sources. Some facts conflict on purpose.
+  const claims = [];
+  const mkSrc = (types) => types.map(t => ({type:t, date: `20${24+Math.floor(rnd()*3)}-${String(1+Math.floor(rnd()*12)).padStart(2,"0")}`, ref: `${SRC_TYPES[t].label} #${1000+Math.floor(rnd()*8999)}`}));
+  if (status !== "Pre-entry signal") claims.push({field:"Legal entity", value:legal, sources:mkSrc(["mca"])});
+  claims.push({field:"Location", value:cities.map(c=>CITIES.find(x=>x.id===c).name).join(", "), sources:mkSrc(status==="Operating"?["lease","press","jobs"]:status==="Announced"?["press","state"]:["jobs"])});
+  claims.push({field:"Functions", value:funcs.join(", "), sources:mkSrc(["jobs","linkedin"])});
+  if (status === "Operating") {
+    const alt = Math.min(4, band + 1);
+    const conflicted = rnd() < .35;
+    claims.push({field:"Headcount", value:HC_BANDS[band], sources:mkSrc(["linkedin","jobs"]), conflict: conflicted ? {value:HC_BANDS[alt], sources:mkSrc(["news"])} : null});
+    claims.push({field:"Set up", value:String(year), sources:mkSrc(["mca"])});
+  }
+  if (status === "Announced") claims.push({field:"Planned headcount", value:pick(["300 by 2027","500 in 3 years","1,000 by 2028"]), sources:mkSrc(["press","state"])});
+  if (status === "Pre-entry signal") {
+    claims.push({field:"Signal", value:pick(["India subsidiary incorporated","'India Site Leader' role posted","Office requirement in market (40–60k sq ft)","Meeting with state IPA recorded"]), sources:mkSrc([pick(["mca","jobs","lease","state"])])});
+  }
+  claims.forEach(c => { c.conf = confidence(c.sources); });
+  const conf = claims.reduce((s,c)=>s+c.conf,0)/claims.length;
+  return {id:"e"+i, name, hq, industry:ind, status, cities, funcs, band, year, aliases, claims, conf, mentions: 3 + Math.floor(rnd()*14)};
+});
+function confidence(sources){
+  // independent source types compound: 1 - Π(1 - w); recency nudges it
+  const types = [...new Set(sources.map(s=>s.type))];
+  let miss = 1; types.forEach(t => miss *= (1 - SRC_TYPES[t].weight));
+  return Math.round((1 - miss) * 100) / 100;
+}
+const PROVIDERS = [
+  {name:"Anvil Advisory", type:"Setup advisor", claimed:40, cities:["blr","hyd","pnq"]},
+  {name:"Lodestar Legal LLP", type:"Law firm", claimed:120, cities:["bom","ncr","blr"]},
+  {name:"Keystone Workplaces", type:"Real estate", claimed:85, cities:["blr","hyd","maa"]},
+  {name:"TalentArc Search", type:"Recruiter", claimed:60, cities:["blr","pnq","hyd"]},
+  {name:"PayGrid EOR", type:"Payroll / EOR", claimed:200, cities:["blr","ncr","maa","cjb"]},
+  {name:"Trellis BOT Partners", type:"Build-operate-transfer", claimed:25, cities:["hyd","maa","cok"]},
+  {name:"Sagar & Iyer CAs", type:"Audit & tax", claimed:70, cities:["maa","cjb","blr"]},
+  {name:"Northstar Realty", type:"Real estate", claimed:150, cities:["ncr","pnq","bom"]},
+].map(p => {
+  const verified = ENTITIES.filter(e=>e.status!=="Pre-entry signal" && e.cities.some(c=>p.cities.includes(c)) && rnd()<.28).slice(0,8);
+  return {...p, verified, ratio: verified.length / Math.max(1, Math.round(p.claimed/10))};
+});
+const SIGNALS = ENTITIES.filter(e=>e.status!=="Operating").map(e => {
+  const parts = {
+    mca: e.status==="Announced" ? 1 : (rnd()<.4?1:0),
+    hiring: rnd()<.7 ? 1 : 0,
+    lease: rnd()<.45 ? 1 : 0,
+    state: e.status==="Announced" ? 1 : (rnd()<.25?1:0),
+    peers: rnd(),
+  };
+  const score = Math.round(100*(.3*parts.mca + .25*parts.hiring + .25*parts.lease + .1*parts.state + .1*parts.peers));
+  return {e, parts, score, window: score>70?"0–6 months":score>45?"6–12 months":"12+ months"};
+}).sort((a,b)=>b.score-a.score);
+
+/* ---------------------------------------------------------------- *
+ *  3. HELPERS                                                        *
+ * ---------------------------------------------------------------- */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const cityName = id => CITIES.find(c=>c.id===id)?.name ?? id;
+const fmt = n => n.toLocaleString("en-IN");
+function confBar(c){ const on = Math.round(c*5); const cls = c>=.8?"":c>=.6?"mid":"low"; return `<span class="conf ${cls}" title="Confidence ${Math.round(c*100)}%" aria-label="Confidence ${Math.round(c*100)}%">${[0,1,2,3,4].map(i=>`<i class="${i<on?"on":""}"></i>`).join("")}</span>`; }
+function srcLink(k){ const s = SOURCES[k]; return s ? `<a href="${s.url}" target="_blank" rel="noopener">${esc(s.label)}</a>` : `<span class="muted">No source captured</span>`; }
+const statusTag = s => `<span class="tag ${s==="Operating"?"ok":s==="Announced"?"acc":"sig"}">${s}</span>`;
+const store = { get(k,d){ try{ const v = localStorage.getItem("kendra."+k); return v===null?d:JSON.parse(v);}catch{return d;} }, set(k,v){ try{ localStorage.setItem("kendra."+k, JSON.stringify(v)); }catch{} } };
+
+/* ---------------------------------------------------------------- *
+ *  4. VIEWS                                                          *
+ * ---------------------------------------------------------------- */
+const VIEWS = [
+  {id:"count", label:"How many GCCs?", render:renderCount},
+  {id:"registry", label:"Registry", badge:()=>ENTITIES.length, render:renderRegistry},
+  {id:"signals", label:"Coming next", badge:()=>SIGNALS.length, render:renderSignals},
+  {id:"locations", label:"Location fit", render:renderLocations},
+  {id:"providers", label:"Provider records", badge:()=>PROVIDERS.length, render:renderProviders},
+  {id:"ingest", label:"Ingest a source", render:renderIngest},
+  {id:"ask", label:"Ask Kendra", render:renderAsk},
+];
+let current = (location.hash||"").slice(1);
+if (!VIEWS.some(v=>v.id===current)) current = store.get("view","count");
+function go(id){ current = id; store.set("view", id); renderNav(); const v = VIEWS.find(x=>x.id===id); $("#view").innerHTML = ""; v.render($("#view")); $("#view").focus({preventScroll:true}); window.scrollTo(0,0); }
+function renderNav(){
+  $("#nav").innerHTML = VIEWS.map(v=>`<button data-v="${v.id}" ${v.id===current?'aria-current="page"':""}>${v.label}${v.badge?`<small>${v.badge()}</small>`:""}</button>`).join("");
+  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+}
+
+/* --- Count reconciliation --- */
+function renderCount(root){
+  const max = 4000;
+  const op = ENTITIES.filter(e=>e.status==="Operating");
+  const rawMentions = ENTITIES.reduce((s,e)=>s+e.mentions,0);
+  const centres = op.reduce((s,e)=>s+e.cities.length,0);
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">The first question nobody can answer</span>
+  <h1>India has somewhere between 1,700 and 3,728 GCCs, depending on who counts and what they count.</h1>
+  <p class="lede">Every report is honest about its own method. The trouble is that each counts a different thing, at a different date, and none publishes the list. Kendra counts from a named, sourced list, so the number can be checked and the definition can be changed.</p></div>
+  <section class="panel stack">
+    <div class="spread"><h2>Published figures, side by side</h2><div class="legend"><span>Solid: reported count</span><span>Hatched: forecast</span></div></div>
+    <div class="stack" role="list">
+      ${ESTIMATES.map(e=>`<div class="est ${e.kind==="forecast"?"fc":""}" role="listitem">
+        <div><b>${esc(e.src)}</b><br><span class="k">${esc(e.when)} · ${esc(e.unit)}</span></div>
+        <div class="track"><div class="fill" style="width:${(e.value/max*100).toFixed(1)}%"></div></div>
+        <div class="v">${fmt(e.value)}</div></div>`).join("")}
+    </div>
+    <p class="k">Sources: ${srcLink("nz24")} · ${srcLink("nz26")} · ${srcLink("ansr")} · ${srcLink("ey")}. FY26 figures are from secondary reporting of the study.</p>
+  </section>
+  <section class="grid g3">
+    <div class="panel stack"><span class="k">Gap from unit alone</span><span class="num">+76%</span><p class="muted">2,117 companies vs 3,728 physical centres in the same FY26 study. "How many GCCs" is two questions.</p></div>
+    <div class="panel stack"><span class="k">A forecast already passed</span><span class="num">4 yrs early</span><p class="muted">The 2030 projection of 2,100–2,200 made in Sep 2024 was exceeded by FY26. Forecasts age fast in this market.</p></div>
+    <div class="panel stack"><span class="k">What's missing from all of them</span><span class="num">The list</span><p class="muted">No report names its GCCs. A service provider, state or entrant cannot check, segment or act on an aggregate.</p></div>
+  </section>
+  <section class="panel stack">
+    <h2>How Kendra gets to one auditable number</h2>
+    <div class="pipeline">
+      <div><b>1 · Collect</b>MCA filings, STPI/SEZ approvals, state MoUs, press, job posts, lease deals</div>
+      <div><b>2 · Extract</b>AI turns each document into typed claims with a quote and a date</div>
+      <div><b>3 · Resolve</b>Legal names, brands and aliases merge into one entity</div>
+      <div><b>4 · Score</b>Confidence rises with independent source types and falls with age</div>
+      <div><b>5 · Count</b>Any definition, applied to the list, with every row clickable</div>
+    </div>
+    <div class="grid g4">
+      <div><span class="k">Raw mentions (sample)</span><div class="num">${fmt(rawMentions)}</div></div>
+      <div><span class="k">Resolved entities</span><div class="num">${ENTITIES.length}</div></div>
+      <div><span class="k">Operating GCCs (companies)</span><div class="num">${op.length}</div></div>
+      <div><span class="k">Operating centres (city units)</span><div class="num">${centres}</div></div>
+    </div>
+    <p class="k">Sample-ledger numbers: the same companies-vs-centres split shows up as soon as the list exists. <button class="btn" id="toReg">Open the registry</button></p>
+  </section>`;
+  $("#toReg").onclick = () => go("registry");
+}
+
+/* --- Registry --- */
+function renderRegistry(root){
+  const st = store.get("reg", {q:"", status:"all", city:"all", minConf:0});
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">Registry</span><h1>Every GCC as a named entity with its evidence</h1>
+  <p class="lede">Each fact carries its sources and a confidence score. Conflicting claims stay visible instead of being averaged away. Click a row to see the ledger.</p></div>
+  <div class="banner"><b>Sample data.</b><span>Company names and records in this view are fictional. They show how the ledger behaves; they are not real GCCs.</span></div>
+  <div class="row">
+    <input type="text" id="rq" placeholder="Search company, alias, function" value="${esc(st.q)}" aria-label="Search" style="flex:1 1 220px">
+    <select id="rs" aria-label="Status"><option value="all">All statuses</option><option>Operating</option><option>Announced</option><option>Pre-entry signal</option></select>
+    <select id="rc" aria-label="City"><option value="all">All cities</option>${CITIES.map(c=>`<option value="${c.id}">${c.name}</option>`).join("")}</select>
+    <label class="row k" for="rm">Min confidence <input type="range" id="rm" min="0" max="0.95" step="0.05" value="${st.minConf}"> <span id="rmv" class="mono"></span></label>
+  </div>
+  <div class="statusline" id="rcount"></div>
+  <div class="tablewrap"><table><thead><tr><th>Company</th><th>Status</th><th>Cities</th><th>Functions</th><th>Headcount</th><th>Evidence</th></tr></thead><tbody id="rb"></tbody></table></div>`;
+  $("#rs").value = st.status; $("#rc").value = st.city;
+  const draw = () => {
+    st.q = $("#rq").value; st.status = $("#rs").value; st.city = $("#rc").value; st.minConf = +$("#rm").value; store.set("reg", st);
+    $("#rmv").textContent = Math.round(st.minConf*100)+"%";
+    const q = st.q.toLowerCase();
+    const rows = ENTITIES.filter(e => (st.status==="all"||e.status===st.status) && (st.city==="all"||e.cities.includes(st.city)) && e.conf>=st.minConf &&
+      (!q || [e.name, e.industry, e.hq, ...e.aliases, ...e.funcs].join(" ").toLowerCase().includes(q)));
+    $("#rcount").textContent = `${rows.length} of ${ENTITIES.length} entities · ${rows.reduce((s,e)=>s+e.cities.length,0)} centres`;
+    $("#rb").innerHTML = rows.map(e=>`<tr class="click" data-id="${e.id}" tabindex="0">
+      <td><b>${esc(e.name)}</b><br><span class="k">${esc(e.industry)} · HQ ${esc(e.hq)}</span></td>
+      <td>${statusTag(e.status)}</td><td>${e.cities.map(cityName).join(", ")}</td><td>${esc(e.funcs.join(", "))}</td>
+      <td>${e.status==="Operating"?HC_BANDS[e.band]:"—"}${e.claims.some(c=>c.conflict)?' <span class="tag bad">conflict</span>':""}</td>
+      <td>${confBar(e.conf)} <span class="k">${e.claims.reduce((s,c)=>s+c.sources.length,0)} sources</span></td></tr>`).join("") || `<tr><td colspan="6" class="muted">No entity matches. Lower the confidence threshold or clear the search.</td></tr>`;
+    root.querySelectorAll("tr.click").forEach(tr=>{ tr.onclick=()=>openEntity(tr.dataset.id); tr.onkeydown=ev=>{ if(ev.key==="Enter") openEntity(tr.dataset.id); }; });
+  };
+  ["rq","rs","rc","rm"].forEach(id=>$("#"+id).addEventListener("input", draw));
+  draw();
+}
+function openEntity(id){
+  const e = ENTITIES.find(x=>x.id===id); if(!e) return;
+  const host = $("#drawerHost");
+  host.innerHTML = `<div class="scrim" id="scrim"></div><aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(e.name)}">
+    <div class="spread"><div class="stack" style="gap:4px"><span class="eyebrow">Entity ledger</span><h2>${esc(e.name)}</h2><span class="k">${esc(e.industry)} · HQ ${esc(e.hq)} · ${e.mentions} raw mentions resolved here</span></div><button class="btn" id="close">Close</button></div>
+    <div class="row">${statusTag(e.status)} <span class="tag">Overall ${confBar(e.conf)} ${Math.round(e.conf*100)}%</span></div>
+    <div><h3>Also known as</h3><div class="chips" style="margin-top:6px">${e.aliases.map(a=>`<span class="tag">${esc(a)}</span>`).join("")}</div></div>
+    <div><h3>Claims</h3>${e.claims.map(c=>`<div class="claim"><span class="k">${esc(c.field)}</span><div><b>${esc(c.value)}</b> ${confBar(c.conf)}
+      <div class="src">${c.sources.map(s=>`<span class="tag">${esc(SRC_TYPES[s.type].label)} · ${s.date}</span>`).join("")}</div>
+      ${c.conflict?`<div class="diff conflict" style="margin-top:8px">Conflicting claim: <b>${esc(c.conflict.value)}</b> from ${c.conflict.sources.map(s=>SRC_TYPES[s.type].label+" "+s.date).join(", ")}. Kept visible; weighted lower because it rests on one news report.</div>`:""}
+    </div></div>`).join("")}</div>
+    <p class="k">Confidence = 1 − Π(1 − w) across independent source types. Filings and leases weigh most; provider claims weigh least.</p>
+  </aside>`;
+  const close = () => host.innerHTML = "";
+  $("#close").onclick = close; $("#scrim").onclick = close;
+  document.addEventListener("keydown", function k(ev){ if(ev.key==="Escape"){ close(); document.removeEventListener("keydown", k);} });
+  $("#close").focus();
+}
+
+/* --- Signals --- */
+function renderSignals(root){
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">Coming next</span><h1>Companies likely to open or expand a GCC, ranked by evidence</h1>
+  <p class="lede">The signals every provider is hunting for already exist in public data, weeks to months before a press release. Kendra scores them so a recruiter, broker or state agency can act early.</p></div>
+  <div class="banner"><b>Sample data.</b><span>Companies and signals are fictional. The scoring model is the real part.</span></div>
+  <div class="tablewrap"><table><thead><tr><th>Company</th><th>Subsidiary filed</th><th>Hiring India lead</th><th>Space requirement</th><th>State MoU</th><th class="n">Score</th><th>Likely window</th></tr></thead>
+  <tbody>${SIGNALS.map(s=>`<tr class="click" data-id="${s.e.id}" tabindex="0"><td><b>${esc(s.e.name)}</b><br><span class="k">${esc(s.e.industry)} · ${esc(s.e.hq)}</span></td>
+    ${["mca","hiring","lease","state"].map(k=>`<td>${s.parts[k]?'<span class="tag ok">Yes</span>':'<span class="k">No</span>'}</td>`).join("")}
+    <td class="n"><div class="row" style="justify-content:flex-end"><div class="bar" style="width:70px"><i style="width:${s.score}%"></i></div><b class="mono">${s.score}</b></div></td>
+    <td><span class="tag ${s.score>70?"sig":""}">${s.window}</span></td></tr>`).join("")}</tbody></table></div>
+  <section class="panel stack"><h2>Score model</h2>
+    <p class="muted">Score = 30 × subsidiary filed + 25 × India-lead hiring + 25 × space requirement + 10 × state MoU + 10 × peer pattern (share of same-industry, same-HQ-country companies that already run an India GCC). Weights are a starting point to be fitted on back-tested entries once the ledger has two years of history.</p></section>`;
+  root.querySelectorAll("tr.click").forEach(tr=>{ tr.onclick=()=>openEntity(tr.dataset.id); tr.onkeydown=ev=>{ if(ev.key==="Enter") openEntity(tr.dataset.id); }; });
+}
+
+/* --- Location fit --- */
+const WEIGHT_KEYS = [["talent","Talent depth"],["cost","Cost advantage"],["infra","Infrastructure"],["maturity","GCC ecosystem maturity"],["policy","GCC-specific policy"]];
+function cityScore(c, w){
+  const pol = POLICIES[c.policy].status==="GCC-specific" ? 5 : 2;
+  const vals = {talent:c.talent, cost:c.cost, infra:c.infra, maturity:c.maturity, policy:pol};
+  const tot = Object.values(w).reduce((a,b)=>a+b,0) || 1;
+  return Math.round(Object.entries(w).reduce((s,[k,v])=>s+vals[k]*v,0)/tot/5*100);
+}
+function renderLocations(root){
+  const w = store.get("weights", {talent:5,cost:3,infra:3,maturity:4,policy:2});
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">Location fit</span><h1>Which city fits this centre, and why</h1>
+  <p class="lede">Move the weights to match the mandate. A 1,500-person engineering hub and a 120-person finance team rank cities differently. Gaps in the data are shown as gaps.</p></div>
+  <div class="grid g2" style="align-items:start">
+    <section class="panel stack"><h2>What matters for this centre</h2>
+      ${WEIGHT_KEYS.map(([k,l])=>`<label class="slider" for="w_${k}"><span>${l}</span><input type="range" id="w_${k}" min="0" max="5" value="${w[k]}"><span class="mono" id="wv_${k}">${w[k]}</span></label>`).join("")}
+      <div class="chips"><span class="k">Presets:</span>
+        <button class="chip" data-p="eng">Large engineering hub</button><button class="chip" data-p="fin">Lean finance ops</button><button class="chip" data-p="cost">Cost-first, tier 2 open</button></div>
+    </section>
+    <section class="panel stack"><h2>Ranked</h2><div id="rank" class="stack"></div></section>
+  </div>
+  <div class="tablewrap"><table><thead><tr><th>City</th><th class="n">Share of GCC leasing FY23–25</th><th class="n">Grade A rent, Rs/sq ft/mo</th><th>Policy</th><th class="n">Talent</th><th class="n">Cost</th></tr></thead><tbody>
+    ${CITIES.map(c=>`<tr><td><b>${c.name}</b><br><span class="k">${c.state} · Tier ${c.tier}</span></td>
+      <td class="n">${c.leasingShare!=null?c.leasingShare+"%":'<span class="tag warn">not in source</span>'}</td>
+      <td class="n">${c.rent[0]}–${c.rent[1]} <span class="tag warn">indicative</span></td>
+      <td><b>${esc(POLICIES[c.policy].name)}</b><br><span class="k">${esc(POLICIES[c.policy].detail)}</span></td>
+      <td class="n mono">${c.talent}/5</td><td class="n mono">${c.cost}/5</td></tr>`).join("")}
+  </tbody></table></div>
+  <p class="k">Leasing share: ${srcLink("icra")}. H1 2026: GCCs took about 45% of gross office leasing in the top seven cities, ${srcLink("anarock")}. Policy summaries: ${srcLink("ka")}, ${srcLink("mh")}, ${srcLink("od")}, ${srcLink("rj")}. Rents and 1–5 scores are Kendra working estimates, marked low confidence until broker and payroll data are ingested.</p>`;
+  const PRE = {eng:{talent:5,cost:2,infra:4,maturity:5,policy:2}, fin:{talent:3,cost:4,infra:3,maturity:3,policy:3}, cost:{talent:2,cost:5,infra:3,maturity:1,policy:5}};
+  const draw = () => {
+    WEIGHT_KEYS.forEach(([k])=>{ w[k] = +$("#w_"+k).value; $("#wv_"+k).textContent = w[k]; });
+    store.set("weights", w);
+    const ranked = CITIES.map(c=>({c, s:cityScore(c,w)})).sort((a,b)=>b.s-a.s);
+    $("#rank").innerHTML = ranked.slice(0,6).map((r,i)=>`<div class="row" style="flex-wrap:nowrap"><span class="mono k" style="width:18px">${i+1}</span><span style="flex:0 0 130px">${r.c.name}</span><div class="bar" style="flex:1"><i style="width:${r.s}%"></i></div><b class="mono" style="width:32px;text-align:right">${r.s}</b></div>`).join("");
+  };
+  WEIGHT_KEYS.forEach(([k])=>$("#w_"+k).addEventListener("input", draw));
+  root.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ const p = PRE[b.dataset.p]; WEIGHT_KEYS.forEach(([k])=>$("#w_"+k).value=p[k]); draw(); });
+  draw();
+}
+
+/* --- Providers --- */
+function renderProviders(root){
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">Provider records</span><h1>What a provider has delivered, separated from what it says</h1>
+  <p class="lede">A provider's "40+ GCCs set up" is a claim. A Kendra delivery record links the provider to a named GCC through a filing, a lease, a press release or a client confirmation. Nobody can pay to rank higher.</p></div>
+  <div class="banner"><b>Sample data.</b><span>Providers and their records are fictional.</span></div>
+  <div class="tablewrap"><table><thead><tr><th>Provider</th><th>Type</th><th class="n">Claimed GCC clients</th><th class="n">Evidence-linked deliveries</th><th>Linked GCCs</th><th>Cities</th></tr></thead><tbody>
+  ${PROVIDERS.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.type)}</td><td class="n mono">${p.claimed}+</td>
+    <td class="n"><b class="mono">${p.verified.length}</b> ${p.verified.length>=4?'<span class="tag ok">track record</span>':p.verified.length>=2?'<span class="tag warn">thin</span>':'<span class="tag bad">unverified</span>'}</td>
+    <td>${p.verified.map(e=>`<button class="chip" data-id="${e.id}">${esc(e.name)}</button>`).join(" ") || '<span class="k">None linked yet</span>'}</td>
+    <td>${p.cities.map(cityName).join(", ")}</td></tr>`).join("")}
+  </tbody></table></div>
+  <section class="panel stack"><h2>How a delivery gets linked</h2>
+    <div class="pipeline"><div><b>Claim</b>Provider lists a client on its profile</div><div><b>Match</b>Kendra resolves the client to a registry entity</div><div><b>Corroborate</b>Lease, filing, press or client sign-off names the provider</div><div><b>Publish</b>Record shows on both profiles, with the evidence</div></div></section>`;
+  root.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>openEntity(b.dataset.id));
+}
+
+/* --- Ingest (AI extraction + entity resolution) --- */
+const SAMPLE_DOCS = [
+  {label:"Expansion press release", text:`CHENNAI, 3 March 2026 — Halvorsen Logistics today opened its second India technology centre on Chennai's OMR corridor. The 85,000 sq ft facility will house 1,200 engineers working on route optimisation and AI by end-2027. Halvorsen Global Services India Pvt Ltd, the company's India entity, has operated in Hyderabad since 2019. The centre was set up with support from Keystone Workplaces.`},
+  {label:"State MoU announcement", text:`Bhopal, 18 Aug 2026: The Government of Madhya Pradesh signed an MoU with Solano Agritech to establish a Global Capability Centre in Indore. The centre will start with 150 professionals in data analytics and finance operations, scaling to 600 by 2028, under the MP GCC Policy 2025.`},
+];
+{ const e = ENTITIES.find(x=>x.status==="Operating" && x.band<=1) || ENTITIES[0];
+  SAMPLE_DOCS.push({label:"Trade news item", text:`${e.name}'s India GCC in ${cityName(e.cities[0])} now has about 4,000 employees, sources said, making it one of the company's largest hubs outside ${e.hq}. The centre handles cybersecurity and analytics.`}); }
+function heuristicExtract(text){
+  const out = {company:null, city:null, headcount:null, functions:[], event:null, date:null, provider:null};
+  const ent = ENTITIES.find(e => text.toLowerCase().includes(e.name.toLowerCase()) || e.aliases.some(a=>text.toLowerCase().includes(a.toLowerCase())));
+  out.company = ent ? ent.name : (text.match(/\b([A-Z][a-z]+ (?:[A-Z][a-z]+ )?(?:Logistics|Insurance|Bank|Pharma|Group|Technologies|Agritech|Software))\b/)||[])[1] || null;
+  // Prefer the city in the sentence that carries the event; else the first city mentioned in the body.
+  const cityIn = str => CITIES.map(c=>({c, i:str.indexOf(c.name.split(" ")[0])})).filter(x=>x.i>=0).sort((a,b)=>a.i-b.i)[0]?.c;
+  const body = text.replace(/^[A-Z][A-Za-z ]+,[^:—-]*[:—-]\s*/, "");
+  const eventSentence = body.split(/(?<=\.)\s+/).find(t=>/opened|open|establish|set up|launch|centre in|hub in|GCC in/i.test(t)) || "";
+  out.city = (cityIn(eventSentence) || cityIn(body) || cityIn(text) || {}).name || null;
+  const hc = text.match(/([\d,]{3,6})\s+(?:engineers|professionals|employees|people)/i) || text.match(/about\s+([\d,]{3,6})/i);
+  out.headcount = hc ? hc[1] : null;
+  out.functions = FUNCS.filter(f => text.toLowerCase().includes(f.split(" ")[0].toLowerCase())).concat(/\bAI\b/.test(text)?["Analytics & AI"]:[]).filter((v,i,a)=>a.indexOf(v)===i);
+  out.event = /MoU/i.test(text)?"Announced (state MoU)": /opened|inaugurat/i.test(text)?"New centre opened": /now has|employees/i.test(text)?"Headcount update":"Mention";
+  const d = text.match(/(\d{1,2} [A-Z][a-z]+ \d{4})|([A-Z][a-z]+ \d{1,2}, \d{4})|(\d{1,2} [A-Z][a-z]{2} \d{4})/); out.date = d ? d[0] : null;
+  const prov = PROVIDERS.find(p => text.includes(p.name)); out.provider = prov ? prov.name : null;
+  out.sourceType = /MoU|Government/i.test(text) ? "state" : /sources said/i.test(text) ? "news" : "press";
+  return out;
+}
+function resolveAndDiff(x){
+  const e = ENTITIES.find(en => x.company && (en.name.toLowerCase()===x.company.toLowerCase() || en.aliases.some(a=>a.toLowerCase().includes(x.company.toLowerCase()))));
+  const lines = [];
+  if (!e) { lines.push({k:"new", t:`No match for "${x.company||"unknown"}" in the registry. Kendra would create a candidate entity and hold it for a second source.`}); return {e:null, lines}; }
+  lines.push({k:"same", t:`Resolved to registry entity ${e.name} (${e.status}).`});
+  if (x.city) {
+    const cid = CITIES.find(c=>c.name===x.city)?.id;
+    lines.push(e.cities.includes(cid) ? {k:"same", t:`Location ${x.city} corroborates an existing claim. Confidence goes up.`} : {k:"new", t:`New location ${x.city}. Adds a centre to ${e.name}; centre count +1.`});
+  }
+  if (x.headcount) {
+    const n = +String(x.headcount).replace(/,/g,"");
+    const band = n<100?0:n<500?1:n<1000?2:n<3000?3:4;
+    const hcClaim = e.claims.find(c=>c.field==="Headcount");
+    if (!hcClaim) lines.push({k:"new", t:`First headcount claim: ${x.headcount}.`});
+    else if (HC_BANDS[band]===hcClaim.value) lines.push({k:"same", t:`Headcount ${x.headcount} sits inside the current band ${hcClaim.value}.`});
+    else lines.push({k:"conflict", t:`Headcount ${x.headcount} conflicts with ledger band ${hcClaim.value}. Both kept; this ${SRC_TYPES[x.sourceType]?.label||"source"} is weighted ${SRC_TYPES[x.sourceType]?.weight ?? .5}.`});
+  }
+  if (x.provider) lines.push({k:"new", t:`Provider ${x.provider} named in a primary document. Adds an evidence-linked delivery to its profile.`});
+  if (e.status!=="Operating" && /opened|MoU/i.test(x.event||"")) lines.push({k:"new", t:`Status moves from ${e.status} to ${/MoU/.test(x.event)?"Announced":"Operating"}.`});
+  return {e, lines};
+}
+function renderIngest(root){
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">Ingest a source</span><h1>Turn a document into checked, merged claims</h1>
+  <p class="lede">This is the engine behind every other view. Paste a press release, filing extract or news item. Kendra extracts typed claims, resolves the company to an existing entity, and shows what the document confirms, adds or contradicts.</p></div>
+  <div class="grid g2" style="align-items:start">
+    <section class="panel stack">
+      <div class="chips"><span class="k">Try a sample:</span>${SAMPLE_DOCS.map((d,i)=>`<button class="chip" data-s="${i}">${d.label}</button>`).join("")}</div>
+      <label for="doc" class="k">Source text</label>
+      <textarea id="doc" rows="10">${esc(store.get("doc", SAMPLE_DOCS[0].text))}</textarea>
+      <div class="row"><button class="btn primary" id="run">Extract and resolve</button><span class="statusline" id="engine"></span></div>
+    </section>
+    <section class="panel stack" id="out"><h2>Result</h2><p class="muted">Run the extractor to see claims and the ledger diff.</p></section>
+  </div>`;
+  root.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{ $("#doc").value = SAMPLE_DOCS[+b.dataset.s].text; store.set("doc",$("#doc").value); });
+  $("#doc").addEventListener("input", ()=>store.set("doc",$("#doc").value));
+  $("#run").onclick = async () => {
+    const text = $("#doc").value.trim(); if(!text) return;
+    $("#run").disabled = true; $("#out").innerHTML = `<h2>Result</h2><p class="muted">Reading the document…</p>`;
+    let x, engine;
+    try {
+      const prompt = `You extract facts about Global Capability Centres (GCCs) in India from one source document.
+Return ONLY a JSON object: {"company": string|null, "city": string|null (one of: ${CITIES.map(c=>c.name).join(", ")}), "headcount": string|null (the number stated, as written), "functions": string[] (from: ${FUNCS.join(", ")}), "event": string (short), "date": string|null, "provider": string|null (a named service provider that helped, if any), "sourceType": "press"|"news"|"state"|"mca"|"lease", "quotes": string[] (the exact sentences that support each fact)}.
+Use null when the document does not state a fact. Do not guess.
+
+DOCUMENT:
+${text}`;
+      const r = await AI.json(prompt);
+      if (r) { x = r; engine = AI.label; }
+    } catch(e){ /* fall through to heuristic */ }
+    if (!x) { x = heuristicExtract(text); engine = "Rule-based extractor (offline)"; }
+    const {lines} = resolveAndDiff(x);
+    $("#engine").textContent = "Engine: " + engine;
+    $("#out").innerHTML = `<h2>Extracted claims</h2>
+      <div>${[["Company",x.company],["City",x.city],["Headcount",x.headcount],["Functions",(x.functions||[]).join(", ")],["Event",x.event],["Date",x.date],["Provider",x.provider],["Source type",SRC_TYPES[x.sourceType]?.label||x.sourceType]].map(([k,v])=>`<div class="claim"><span class="k">${k}</span><b>${v?esc(v):'<span class="muted">not stated</span>'}</b></div>`).join("")}</div>
+      ${x.quotes&&x.quotes.length?`<details><summary>Supporting quotes (${x.quotes.length})</summary><div class="stack" style="margin-top:8px">${x.quotes.map(q=>`<p class="k">"${esc(q)}"</p>`).join("")}</div></details>`:""}
+      <h2>Ledger diff</h2><div class="stack">${lines.map(l=>`<div class="diff ${l.k}"><span class="tag ${l.k==="conflict"?"bad":l.k==="new"?"ok":"acc"}">${l.k==="same"?"confirms":l.k}</span> ${esc(l.t)}</div>`).join("")}</div>`;
+    $("#run").disabled = false;
+  };
+}
+
+/* --- Ask Kendra (agent with tools over the ledger) --- */
+const TOOLS = {
+  market_counts: {description:"Published counts and forecasts of India GCCs, with source and unit.", run:()=>ESTIMATES},
+  search_registry: {description:"Search the GCC registry. Input: {query?: string, city?: string, status?: 'Operating'|'Announced'|'Pre-entry signal', industry?: string}. Returns matching entities with cities, functions, headcount band and confidence.",
+    run:(i={})=>ENTITIES.filter(e=>(!i.status||e.status===i.status)&&(!i.city||e.cities.some(c=>cityName(c).toLowerCase().includes(String(i.city).toLowerCase())))&&(!i.industry||e.industry.toLowerCase().includes(String(i.industry).toLowerCase()))&&(!i.query||[e.name,...e.aliases,...e.funcs,e.industry].join(" ").toLowerCase().includes(String(i.query).toLowerCase())))
+      .slice(0,25).map(e=>({name:e.name,status:e.status,industry:e.industry,hq:e.hq,cities:e.cities.map(cityName),functions:e.funcs,headcount:e.status==="Operating"?HC_BANDS[e.band]:null,confidence:e.conf}))},
+  compare_cities: {description:"City data: GCC leasing share (ICRA, where stated), indicative Grade A rent range, 1–5 talent/cost/infra/maturity scores and state GCC policy. Input: {cities?: string[]}.",
+    run:(i={})=>CITIES.filter(c=>!i.cities||!i.cities.length||i.cities.some(n=>c.name.toLowerCase().includes(String(n).toLowerCase()))).map(c=>({city:c.name,state:c.state,tier:c.tier,leasingShareFY23_25:c.leasingShare,rentRsSqftMonth:c.rent.join("–")+" (indicative)",talent:c.talent,cost:c.cost,infra:c.infra,maturity:c.maturity,policy:POLICIES[c.policy]}))},
+  rank_cities: {description:"Rank cities for a mandate. Input: {talent,cost,infra,maturity,policy} weights 0–5.", run:(w)=>CITIES.map(c=>({city:c.name,score:cityScore(c,{talent:+w.talent||0,cost:+w.cost||0,infra:+w.infra||0,maturity:+w.maturity||0,policy:+w.policy||0})})).sort((a,b)=>b.score-a.score)},
+  find_providers: {description:"Service providers with claimed vs evidence-linked GCC deliveries. Input: {type?: string, city?: string}.",
+    run:(i={})=>PROVIDERS.filter(p=>(!i.type||p.type.toLowerCase().includes(String(i.type).toLowerCase()))&&(!i.city||p.cities.some(c=>cityName(c).toLowerCase().includes(String(i.city).toLowerCase())))).map(p=>({name:p.name,type:p.type,claimedClients:p.claimed,evidenceLinkedDeliveries:p.verified.length,linkedGCCs:p.verified.map(e=>e.name),cities:p.cities.map(cityName)}))},
+  upcoming_gccs: {description:"Companies with pre-entry or announced signals, ranked by score.", run:()=>SIGNALS.map(s=>({name:s.e.name,industry:s.e.industry,hq:s.e.hq,score:s.score,window:s.window,signals:Object.entries(s.parts).filter(([k,v])=>k!=="peers"&&v).map(([k])=>k)}))},
+};
+const ASK_RULES = `You are Kendra, an analyst for India's Global Capability Centre (GCC) ecosystem. Answer ONLY from tool results. Call tools before answering.
+Rules: cite where each number comes from (the source name in market_counts, "ICRA" for leasing share, "Kendra estimate" for rents and scores, "sample ledger" for companies/providers). Company, provider and signal records are fictional sample data: say so when you use them. If the data does not cover the question, say what is missing instead of guessing. Be concise: short paragraphs or a tight list, under 220 words.`;
+let turns = [];
+function offlineAnswer(q){
+  const s = q.toLowerCase(); const used = [];
+  const out = [];
+  if (/how many|count|number of gcc/.test(s)) { used.push("market_counts"); out.push("Published counts disagree because they measure different things: Nasscom–Zinnov reported 1,700+ GCCs in FY24 and, as reported, 2,117 companies running 3,728 centres in FY26; ANSR cites 1,900+. EY's 2030 forecast is 2,400–2,550. The companies-vs-centres split alone is a 76% gap. No published report lists its GCCs."); }
+  const cityHit = CITIES.filter(c=>s.includes(c.name.toLowerCase().split(" ")[0]));
+  if (cityHit.length || /city|where|location|tier/.test(s)) { used.push("compare_cities","rank_cities");
+    const list = cityHit.length?cityHit:CITIES.map(c=>({c,s:cityScore(c,{talent:4,cost:3,infra:3,maturity:3,policy:2})})).sort((a,b)=>b.s-a.s).slice(0,4).map(x=>x.c);
+    out.push(list.map(c=>`${c.name}: ${c.leasingShare!=null?c.leasingShare+"% of GCC leasing FY23–25 (ICRA), ":""}rent ~Rs ${c.rent.join("–")}/sq ft/mo (Kendra estimate), talent ${c.talent}/5, cost ${c.cost}/5; ${POLICIES[c.policy].name}.`).join("\n")); }
+  if (/provider|advisor|recruit|lawyer|eor|payroll|real estate|broker/.test(s)) { used.push("find_providers");
+    out.push("Providers by evidence-linked deliveries (sample ledger, fictional):\n" + [...PROVIDERS].sort((a,b)=>b.verified.length-a.verified.length).slice(0,4).map(p=>`${p.name} (${p.type}): ${p.verified.length} linked vs ${p.claimed}+ claimed`).join("\n")); }
+  if (/next|coming|upcoming|pipeline|signal|lead/.test(s)) { used.push("upcoming_gccs");
+    out.push("Highest-scoring upcoming GCCs (sample ledger, fictional):\n" + SIGNALS.slice(0,4).map(x=>`${x.e.name}: score ${x.score}, ${x.window}`).join("\n")); }
+  if (/policy|incentive|subsid/.test(s)) { used.push("compare_cities");
+    out.push("States with GCC-specific policies in the ledger: " + Object.values(POLICIES).filter(p=>p.status==="GCC-specific").map(p=>p.name).join("; ") + ". Telangana, Tamil Nadu and Kerala are marked as gaps to verify."); }
+  if (!out.length) out.push("The offline engine handles questions about GCC counts, cities, policies, providers and upcoming GCCs. Connect Claude (below) for open questions.");
+  return {text: out.join("\n\n"), trace: [...new Set(used)]};
+}
+function renderAsk(root){
+  root.innerHTML = `
+  <div class="stack"><span class="eyebrow">Ask Kendra</span><h1>Questions answered from the ledger, with the trail</h1>
+  <p class="lede">Claude works as an agent over the same tools the views use. It can only answer from what the ledger holds, and it shows which tools it called.</p></div>
+  <div class="grid g2" style="align-items:start;grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
+    <section class="panel stack">
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="chips" id="sugg">${["How many GCCs are there in India, really?","We're a 400-person insurance tech team. Hyderabad or Pune?","Which recruiters have actually delivered GCCs in Chennai?","Which companies are likely to set up next, and who should call them?","What incentives does Madhya Pradesh offer vs Karnataka?"].map(q=>`<button class="chip">${q}</button>`).join("")}</div>
+      <form id="askf" class="row"><input type="text" id="askq" placeholder="Ask about counts, cities, policies, providers, upcoming GCCs" style="flex:1 1 240px" aria-label="Question"><button class="btn primary" id="askb">Ask</button><button class="btn" type="button" id="stop" hidden>Stop</button></form>
+    </section>
+    <section class="panel stack"><h2>Engine</h2><p class="statusline" id="eng">${AI.label}</p>
+      <p class="k">Inside Claude, Kendra uses your Claude account. Elsewhere, paste an Anthropic API key (kept in this browser only) or use the offline engine.</p>
+      <label for="key" class="k">Anthropic API key (optional)</label><input type="password" id="key" placeholder="sk-ant-…" value="${esc(store.get("key",""))}">
+      <h3>Tools the agent can call</h3><ul class="k" style="margin:0;padding-left:18px">${Object.entries(TOOLS).map(([n,t])=>`<li><span class="mono">${n}</span></li>`).join("")}</ul>
+    </section>
+  </div>`;
+  const chat = $("#chat");
+  const paint = () => { chat.innerHTML = turns.length ? turns.map(t=>`<div class="msg ${t.role==="user"?"u":"a"}">${esc(t.content)}${t.trace?`<span class="trace">${esc(t.trace)}</span>`:""}</div>`).join("") : `<p class="muted">Pick a question below or write your own.</p>`; chat.scrollTop = chat.scrollHeight; };
+  paint();
+  $("#key").addEventListener("change", ()=>{ store.set("key",$("#key").value.trim()); AI.refresh(); $("#eng").textContent = AI.label; });
+  let ctl;
+  $("#stop").onclick = () => ctl?.abort();
+  const ask = async (q) => {
+    if (!q.trim()) return;
+    turns.push({role:"user", content:q}); $("#askq").value = "";
+    const a = {role:"assistant", content:"Thinking…", trace:""}; turns.push(a); paint();
+    $("#askb").disabled = true; $("#stop").hidden = false; ctl = new AbortController();
+    const used = [];
+    try {
+      const res = await AI.agent(turns.slice(0,-1).map(t=>({role:t.role, content:t.content})), used, ctl.signal, txt=>{ a.content = txt; paint(); });
+      if (res) { a.content = res; a.trace = "Tools: " + ([...new Set(used)].join(", ") || "none") + " · " + AI.label; }
+      else { const o = offlineAnswer(q); a.content = o.text; a.trace = "Tools: " + o.trace.join(", ") + " · Offline engine"; }
+    } catch(e) {
+      if (e && e.code === "cancelled") { a.content = (e.text||"") + " [stopped]"; }
+      else { const o = offlineAnswer(q); a.content = o.text; a.trace = "Tools: " + o.trace.join(", ") + " · Offline engine (" + (e?.code||e?.message||"AI unavailable") + ")"; }
+    }
+    $("#askb").disabled = false; $("#stop").hidden = true; paint();
+  };
+  $("#askf").onsubmit = ev => { ev.preventDefault(); ask($("#askq").value); };
+  $("#sugg").querySelectorAll(".chip").forEach(c=>c.onclick=()=>ask(c.textContent));
+}
+
+/* ---------------------------------------------------------------- *
+ *  5. AI ADAPTER: Claude in the viewer → Anthropic API key → offline *
+ * ---------------------------------------------------------------- */
+const AI = {
+  sample:null, label:"Offline engine (rules)",
+  refresh(){ this.label = this.sample ? "Claude (viewer account)" : store.get("key","") ? "Claude via API key" : "Offline engine (rules)"; },
+  async json(prompt){
+    if (this.sample) return await this.sample.json(prompt, {modelTier:"default"});
+    const key = store.get("key","");
+    if (key) { const t = await apiCall(key, [{role:"user", content:prompt}]); const m = t.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; }
+    return null;
+  },
+  async agent(history, used, signal, onText){
+    const msgs = [{role:"user", content:ASK_RULES}, {role:"assistant", content:"Understood. I will call tools and answer only from their results."}, ...history];
+    if (this.sample) {
+      const tools = Object.entries(TOOLS).map(([name,t])=>({name, description:t.description, inputSchema:{type:"object", additionalProperties:true}, execute:(input)=>{ used.push(name); return t.run(input||{}); }}));
+      const r = await this.sample(msgs, {tools, signal, cache:false, onText:({text})=>onText(text)});
+      return r.text;
+    }
+    const key = store.get("key","");
+    if (key) return await apiAgent(key, msgs, used, signal);
+    return null;
+  }
+};
+const MODEL = "claude-sonnet-5-5";
+async function apiCall(key, messages, extra={}, signal){
+  const r = await fetch("https://api.anthropic.com/v1/messages", {method:"POST", signal, headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body: JSON.stringify({model:MODEL, max_tokens:1500, messages, ...extra})});
+  if (!r.ok) throw new Error("API " + r.status);
+  const j = await r.json();
+  return extra.tools ? j : j.content.filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+async function apiAgent(key, messages, used, signal){
+  const tools = Object.entries(TOOLS).map(([name,t])=>({name, description:t.description, input_schema:{type:"object", additionalProperties:true}}));
+  let msgs = [...messages];
+  for (let round=0; round<6; round++){
+    const j = await apiCall(key, msgs, {tools}, signal);
+    msgs.push({role:"assistant", content:j.content});
+    const calls = j.content.filter(b=>b.type==="tool_use");
+    if (!calls.length) return j.content.filter(b=>b.type==="text").map(b=>b.text).join("");
+    msgs.push({role:"user", content:calls.map(c=>{ used.push(c.name); let out; try{ out = TOOLS[c.name].run(c.input||{}); }catch(e){ out = {error:String(e)}; } return {type:"tool_result", tool_use_id:c.id, content:JSON.stringify(out)}; })});
+  }
+  return "Stopped after six tool rounds.";
+}
+(async () => {
+  try { if (window.claude?.use) { const s = await window.claude.use("sample"); if (s) { AI.sample = s; AI.refresh(); const e = document.getElementById("eng"); if (e) e.textContent = AI.label; } } } catch {}
+})();
+AI.refresh();
+renderNav(); go(current);
+</script>
+
+</body>
+</html>

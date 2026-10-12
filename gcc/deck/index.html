@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kendra — GCC source of truth</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+html,body{margin:0;background:#0b1117;height:100%;overflow:hidden}
+h1,h2,h3,p,ul,table{margin:0} ul{padding-left:1.2em}
+table{border-collapse:collapse;width:100%} th,td{text-align:left;padding:.35em .6em;border-bottom:1px solid #d5d9d2;vertical-align:top} th{font-weight:600;color:#56606b}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;box-sizing:border-box;display:none;overflow:hidden}
+.slide:not(.on){display:none!important}
+.notes{display:none}
+#bar{position:fixed;right:16px;bottom:12px;font:13px 'IBM Plex Sans',Arial,sans-serif;color:#9aa5af}
+@media print{html,body{overflow:visible;height:auto;background:none} #stage{position:static;transform:none!important} .slide,.slide:not(.on){display:flex!important;position:relative;page-break-after:always} #bar{display:none} @page{size:1920px 1080px;margin:0}}
+</style></head><body>
+<div id="stage">
+<section class="slide" id="cover" data-transition="fade" style="background:#15202B;color:#E7EBEE;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<p style="font-size:28px;color:#8C9CFF;letter-spacing:2px;text-transform:uppercase;font-weight:500">A proposal for India's GCC ecosystem · October 2026</p>
+<div style="display:flex;flex-direction:column;gap:32px">
+<h1 style="font-family:'Source Serif 4', Georgia, serif;font-size:180px;font-weight:600;line-height:1;color:#E7EBEE">Kendra</h1>
+<p style="font-size:44px;line-height:1.3;color:#C9D1D8;width:1300px">The evidence ledger for India's Global Capability Centres. Every GCC named, every number with its source.</p>
+</div>
+<div style="display:flex;gap:48px">
+<p style="font-size:28px;color:#AAB4BE">Problem · Opportunities · Solution · Positioning</p>
+<p style="font-size:28px;color:#8C9CFF">+ working prototype</p>
+</div>
+<aside class="notes">Kendra means "centre" in Hindi and several other Indian languages. The pitch in one line: the GCC ecosystem doesn't lack data, it lacks a resolved, sourced list. We build that list and the products on top of it.</aside>
+</section>
+<section class="slide" id="answer" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The answer on one page</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">The data exists. Nobody has resolved it into one list.</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px">
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;font-weight:600">PROBLEM</p>
+<p style="font-size:30px;line-height:1.4;color:#2A3540">One study counts 2,117 GCCs and 3,728 centres. No report names them. Entrants, providers and states each pay a referral tax to learn what is true.</p>
+</div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;font-weight:600">OPPORTUNITY</p>
+<p style="font-size:30px;line-height:1.4;color:#2A3540">An entity-resolved, sourced registry of GCCs is the base layer. Signals, location intelligence and provider track records are all queries on it.</p>
+</div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;font-weight:600">SOLUTION · POSITION</p>
+<p style="font-size:30px;line-height:1.4;color:#2A3540">Build the ledger with AI ingestion. Sell signals to providers first; give entrants the truth free. Be the neutral record: no pay-to-rank.</p>
+</div>
+</div>
+<aside class="notes">If you read only one slide: the wedge is entity resolution plus provenance, not more reports. Revenue comes first from service providers who need leads every month; trust comes from entrants who get the truth free.</aside>
+</section>
+<section class="slide" id="market" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The problem · context</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">A large market growing faster than its own forecasts</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px;border-top:3px solid #2F47C9;padding:24px 0 0 0">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1">2,117</p>
+<p style="font-size:28px;color:#4A5560;line-height:1.35">GCCs in India, FY26</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-top:3px solid #2F47C9;padding:24px 0 0 0">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1">2.36M</p>
+<p style="font-size:28px;color:#4A5560;line-height:1.35">professionals employed</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-top:3px solid #2F47C9;padding:24px 0 0 0">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1">$98.4B</p>
+<p style="font-size:28px;color:#4A5560;line-height:1.35">revenue, up from $64.6B in FY24</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;border-top:3px solid #B4570F;padding:24px 0 0 0">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1">45%</p>
+<p style="font-size:28px;color:#4A5560;line-height:1.35">of India's office leasing, H1 2026</p>
+</div>
+</div>
+<p style="font-size:32px;line-height:1.4;color:#2A3540;width:1500px">About 200 new GCCs a year. The 2030 forecast of 2,100–2,200 GCCs, made in September 2024, was passed in FY26. Annual reports cannot keep up with a market that moves this fast.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A737D">Sources: Nasscom–Zinnov GCC Landscape (Sep 2024; FY26 figures as reported, May 2026); ANAROCK via IANS, Jul 2026.</p>
+<aside class="notes">FY26 numbers come from secondary reporting of the Nasscom-Zinnov study. ~200 a year is derived: 1,700+ in FY24 to 2,117 in FY26. GCCs took 70% of Bengaluru's leasing and 48% of Hyderabad's in H1 2026.</aside>
+</section>
+<section class="slide" id="count" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The problem · even the basics</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Nobody agrees how many GCCs there are</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:flex-start">
+<table style="width:1080px;font-size:26px;color:#2A3540;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:34%">Source</th><th style="width:22%">Date</th><th style="width:16%;text-align:right">Figure</th><th style="width:28%">Counts</th></tr>
+<tr><td>Nasscom–Zinnov</td><td>Mid-2023</td><td style="text-align:right">1,580</td><td>companies</td></tr>
+<tr><td>Nasscom–Zinnov</td><td>Sep 2024</td><td style="text-align:right">1,700+</td><td>companies</td></tr>
+<tr><td>ANSR</td><td>2026</td><td style="text-align:right">1,900+</td><td>GCCs</td></tr>
+<tr><td>Nasscom–Zinnov</td><td>FY26</td><td style="text-align:right">2,117</td><td>companies</td></tr>
+<tr style="background:#E6E9FB"><td>Nasscom–Zinnov</td><td>FY26</td><td style="text-align:right">3,728</td><td>physical centres</td></tr>
+<tr><td>EY (forecast)</td><td>for 2030</td><td style="text-align:right">2,400–2,550</td><td>GCCs</td></tr>
+</table>
+<div style="display:flex;flex-direction:column;gap:24px;flex:1">
+<p style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1;color:#2F47C9">+76%</p>
+<p style="font-size:30px;line-height:1.4;color:#2A3540">Gap between companies and centres in the same study. "How many GCCs" is two different questions.</p>
+<p style="font-size:30px;line-height:1.4;color:#2A3540">None of these reports publishes the list behind its number.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A737D">Sources: Nasscom–Zinnov (2023, Sep 2024, FY26 as reported); ANSR emerging-cities report 2026; EY press release, Jun 2023.</p>
+<aside class="notes">Each report is honest about its method. The problem is that each counts something different: companies vs centres, with or without mid-market, different dates. A new entrant can't tell which number is "true" because the question itself is ambiguous. That is the core of the information asymmetry.</aside>
+</section>
+<section class="slide" id="players" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The problem · the players</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">One entrant, eight counterparties, no shared map</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Setup advisors / Big 4</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See many mandates. Sell the study, so their view is the product.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Law firms</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See entity structures early. Bound by confidentiality.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Auditors and tax</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See transfer pricing and real costs. Rarely shared.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Real estate firms</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See space requirements months ahead. Paid on the deal.</p></div>
+<div style="background:#15202B;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px;justify-content:center"><h3 style="font-size:30px;font-weight:600;color:#E7EBEE">The entrant</h3><p style="font-size:24px;color:#C9D1D8;line-height:1.35">Makes a 5–10 year, multi-million dollar call once, with the least information of anyone.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Recruiters</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See talent supply and pay. Paid per hire.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Payroll, EOR, BOT</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See early-stage teams before any filing. Want the transfer later.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">State governments</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">See MoUs and incentive claims. Compete with every other state.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Industry bodies, media</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">Publish aggregates. Don't publish the list.</p></div>
+</div>
+<aside class="notes">Each player holds a slice of the truth, and most are paid in ways that make them partial: advisors sell studies, brokers earn on the lease, recruiters per hire. Nobody's incentive is to assemble the whole picture and give it away. That is why the market runs on referrals.</aside>
+</section>
+<section class="slide" id="hurt" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The problem · who is hurt, how much</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Everyone pays, in different currencies</h2>
+</div>
+<table style="font-size:24px;color:#2A3540;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:18%">Who</th><th style="width:26%">What they can't see</th><th style="width:30%">What it costs</th><th style="width:26%">What they do today</th></tr>
+<tr><td><b>New entrant</b></td><td>Which city and which partners actually deliver</td><td>6-month slip on 300 roles ≈ $3–4M of lost savings*</td><td>Referrals, one Big 4 study, broker tours</td></tr>
+<tr><td><b>Service providers</b></td><td>Who is coming next, and when</td><td>Hear at the press release, after lease and hires are done</td><td>LinkedIn trawling, bought lists, events</td></tr>
+<tr><td><b>State governments</b></td><td>Which companies to court; how they rank vs other states</td><td>Incentives aimed blind; no way to measure policy return</td><td>Consultant studies, roadshows, MoU counts</td></tr>
+<tr><td><b>Operating GCCs</b></td><td>Peer benchmarks on cost, pay and scope</td><td>Mispriced talent; weak case for the next mandate</td><td>Paid surveys, peer WhatsApp groups</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A737D">*Illustrative: 300 roles × ~$25k annual saving per role versus home-country cost × 0.5 year. To be validated in interviews.</p>
+<aside class="notes">The entrant is hurt most per decision but decides once. Providers are hurt a little every week, which is why they are the first paying customer. States are hurt in a way that's hard to see: they can't tell whether their incentives worked.</aside>
+</section>
+<section class="slide" id="rootcause" data-transition="fade" style="background:#15202B;color:#E7EBEE;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:64px;justify-content:center">
+<div style="display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;color:#8C9CFF;letter-spacing:2px;text-transform:uppercase;font-weight:600">The problem · root cause</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:80px;font-weight:600;line-height:1.1;color:#E7EBEE">Data is not missing. It is unresolved.</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:40px">
+<div style="display:flex;flex-direction:column;gap:12px;border-top:2px solid #8C9CFF;padding:24px 0 0 0"><h3 style="font-size:36px;font-weight:600;color:#E7EBEE">Scattered</h3><p style="font-size:26px;line-height:1.4;color:#C9D1D8">MCA filings, STPI and SEZ approvals, state MoUs, press, job posts, lease deals.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px;border-top:2px solid #8C9CFF;padding:24px 0 0 0"><h3 style="font-size:36px;font-weight:600;color:#E7EBEE">Unresolved</h3><p style="font-size:26px;line-height:1.4;color:#C9D1D8">One GCC shows up under a legal entity, a brand, an acquired unit and a nickname.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px;border-top:2px solid #8C9CFF;padding:24px 0 0 0"><h3 style="font-size:36px;font-weight:600;color:#E7EBEE">Unverified</h3><p style="font-size:26px;line-height:1.4;color:#C9D1D8">A provider's "40+ GCCs set up" looks the same as a filed lease.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px;border-top:2px solid #8C9CFF;padding:24px 0 0 0"><h3 style="font-size:36px;font-weight:600;color:#E7EBEE">Stale</h3><p style="font-size:26px;line-height:1.4;color:#C9D1D8">Annual reports, in a market adding about four GCCs a week.</p></div>
+</div>
+<aside class="notes">This reframing drives everything after it. If the problem were missing data, the answer would be another survey. Because the problem is resolution and provenance, the answer is a ledger: entities, claims, sources, confidence. Modern LLMs make extraction and matching cheap enough to do this at the scale of every filing and press release.</aside>
+</section>
+<section class="slide" id="opps" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The opportunities</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Seven opportunities, scored on four tests</h2>
+</div>
+<table style="font-size:24px;color:#2A3540;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:31%">Opportunity</th><th style="width:15%">Who pays</th><th style="width:12%">Public data</th><th style="width:14%">Defensible</th><th style="width:28%">Call</th></tr>
+<tr style="background:#E6E9FB"><td><b>GCC registry + intent signals</b></td><td>Providers, states</td><td>High</td><td>High</td><td><b>Build first</b></td></tr>
+<tr style="background:#E6E9FB"><td><b>Location + incentive intelligence</b></td><td>States; free for entrants</td><td>Medium</td><td>Medium</td><td><b>Build first, as the free layer</b></td></tr>
+<tr><td><b>Provider delivery records</b></td><td>Providers (profiles)</td><td>Low at start</td><td>Very high</td><td>Build second, on the registry</td></tr>
+<tr><td>Talent and pay benchmarks</td><td>GCCs, HR</td><td>Low</td><td>Medium</td><td>Partner; crowded</td></tr>
+<tr><td>Office space and clusters</td><td>Entrants, developers</td><td>Medium</td><td>Low</td><td>Ingest; brokers own it</td></tr>
+<tr><td>Setup marketplace / RFPs</td><td>Providers</td><td>n/a</td><td>High once trusted</td><td>Later; needs trust first</td></tr>
+<tr><td>Peer benchmarking club</td><td>GCC leaders</td><td>Contributed</td><td>High</td><td>Later</td></tr>
+</table>
+<aside class="notes">Four tests: is there a buyer with budget, can we build it from public data, does it get harder to copy over time, and does the rest of the stack depend on it. The registry wins all four. Compensation benchmarks are valuable but Aon, Mercer and others already sell them; we would partner rather than compete.</aside>
+</section>
+<section class="slide" id="priorities" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The opportunities · what matters most</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">The registry comes first, because everything else joins on it</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px"><p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;color:#2F47C9;line-height:1">1</p><h3 style="font-size:36px;font-weight:600">It is the base layer</h3><p style="font-size:28px;line-height:1.45;color:#4A5560">Location intelligence, provider records and signals are all queries on "which GCC, where, with whom". Without resolved entities, each is one more scattered dataset.</p></div>
+<div style="display:flex;flex-direction:column;gap:16px"><p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;color:#2F47C9;line-height:1">2</p><h3 style="font-size:36px;font-weight:600">It has buyers on day one</h3><p style="font-size:28px;line-height:1.45;color:#4A5560">Thousands of providers need leads every month. About 200 entrants a year need the truth once. Recurring need pays the bills.</p></div>
+<div style="display:flex;flex-direction:column;gap:16px"><p style="font-family:'Source Serif 4', Georgia, serif;font-size:72px;font-weight:600;color:#2F47C9;line-height:1">3</p><h3 style="font-size:36px;font-weight:600">It compounds</h3><p style="font-size:28px;line-height:1.45;color:#4A5560">Every new document makes the next match cheaper and the confidence higher. A competitor who starts later starts with less evidence.</p></div>
+</div>
+<aside class="notes">Provider delivery records are the most valuable long-term asset, but they can't exist before the registry: a delivery record is a link between a provider and a resolved GCC entity, backed by evidence.</aside>
+</section>
+<section class="slide" id="product" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The solution</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Kendra: one ledger, four products, one analyst</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px">
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Registry and Index</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">Every GCC named, with a count you can audit and re-define.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Signals</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">Who is about to enter or expand, scored from filings, hiring and space.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Location fit</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">Cities ranked for a mandate, with state incentives and gaps shown.</p></div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:30px;font-weight:600">Provider records</h3><p style="font-size:24px;color:#4A5560;line-height:1.35">Deliveries linked to named GCCs by evidence, kept apart from claims.</p></div>
+</div>
+<div style="background:#E6E9FB;border-radius:14px;padding:28px 32px;display:flex;gap:24px;align-items:center"><h3 style="font-size:30px;font-weight:600;color:#2F47C9;min-width:max-content">Ask Kendra</h3><p style="font-size:26px;color:#2A3540;line-height:1.35">An AI analyst that calls the same tools as the products and answers only from the ledger, showing its trail.</p></div>
+<div style="background:#15202B;border-radius:14px;padding:28px 32px;display:flex;gap:24px;align-items:center"><h3 style="font-size:30px;font-weight:600;color:#E7EBEE;min-width:max-content">Evidence ledger</h3><p style="font-size:26px;color:#C9D1D8;line-height:1.35">Entities, aliases, claims, sources, confidence, history. Every product reads from here.</p></div>
+</div>
+<aside class="notes">The product surface is deliberately thin. The asset is the ledger underneath. Each product is a view on it for a different stakeholder, which keeps the build small and makes every correction improve every product at once.</aside>
+</section>
+<section class="slide" id="engine" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The solution · how the ledger is built</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">AI does the reading and matching. The maths stays transparent.</h2>
+</div>
+<div style="display:flex;gap:16px;align-items:stretch">
+<div style="flex:1;background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:8px"><p style="font-size:24px;color:#2F47C9;font-weight:600">1 · COLLECT</p><p style="font-size:24px;line-height:1.35;color:#2A3540">MCA filings, STPI/SEZ, state MoUs, press, job posts, leases</p></div>
+<div style="flex:1;background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:8px"><p style="font-size:24px;color:#2F47C9;font-weight:600">2 · EXTRACT</p><p style="font-size:24px;line-height:1.35;color:#2A3540">LLM turns each document into typed claims with the quote</p></div>
+<div style="flex:1;background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:8px"><p style="font-size:24px;color:#2F47C9;font-weight:600">3 · RESOLVE</p><p style="font-size:24px;line-height:1.35;color:#2A3540">Names, brands, aliases merge; low-confidence goes to review</p></div>
+<div style="flex:1;background:#FBFBF9;border:1px solid #DFE2DC;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:8px"><p style="font-size:24px;color:#2F47C9;font-weight:600">4 · SCORE</p><p style="font-size:24px;line-height:1.35;color:#2A3540">Confidence from independent source types and recency</p></div>
+<div style="flex:1;background:#15202B;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:8px"><p style="font-size:24px;color:#8C9CFF;font-weight:600">5 · SERVE</p><p style="font-size:24px;line-height:1.35;color:#E7EBEE">Products and the analyst read the same ledger</p></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px"><h3 style="font-size:32px;font-weight:600">Where AI is used</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Extraction from unstructured text, entity matching, signal detection in job posts, and the analyst agent that answers with tool calls.</p></div>
+<div style="display:flex;flex-direction:column;gap:12px"><h3 style="font-size:32px;font-weight:600">Where it is not</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Counts, confidence scores and rankings are plain formulas anyone can inspect. An LLM never invents a number that reaches a user.</p></div>
+</div>
+<aside class="notes">Confidence = 1 minus the product of (1 minus weight) across independent source types. A filing and a lease together are near-certain; one news report alone is not. Conflicting claims stay visible. The prototype runs steps 2 to 5 live.</aside>
+</section>
+<section class="slide" id="whofirst" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The solution · for whom first</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Providers pay first. Entrants get the truth free.</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px">
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;color:#B4570F;font-weight:600">FIRST PAYING USER</p>
+<h3 style="font-size:40px;font-weight:600;line-height:1.2">Service providers: real estate, recruiters, EOR, law, BOT</h3>
+<ul style="font-size:26px;line-height:1.5;color:#4A5560">
+<li>Need leads every week, not once</li>
+<li>Have budget and short buying cycles</li>
+<li>Tell us fast when the data is wrong</li>
+</ul>
+</div>
+<div style="background:#FBFBF9;border:1px solid #DFE2DC;border-radius:16px;padding:40px;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;color:#2F47C9;font-weight:600">FIRST TRUSTED AUDIENCE</p>
+<h3 style="font-size:40px;font-weight:600;line-height:1.2">Entrants and GCC leaders, through a free public index</h3>
+<ul style="font-size:26px;line-height:1.5;color:#4A5560">
+<li>Bring credibility and corrections</li>
+<li>Make a verified profile worth having</li>
+<li>Become the demand side of the marketplace later</li>
+</ul>
+</div>
+</div>
+<aside class="notes">The tension: if providers pay, will entrants trust us? That's why provider money buys data access and a profile, never a ranking. States come next, 6 to 18 months in, as buyers of benchmarking dashboards.</aside>
+</section>
+<section class="slide" id="model" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The solution · sequence and model</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Three phases, each funded by the one before</h2>
+</div>
+<table style="font-size:26px;color:#2A3540;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:16%">When</th><th style="width:34%">Ship</th><th style="width:20%">For</th><th style="width:30%">Revenue</th></tr>
+<tr><td><b>0–6 months</b></td><td>Ledger for the top six cities; free public GCC Index; Signals Pro</td><td>Providers</td><td>Team subscriptions</td></tr>
+<tr><td><b>6–18 months</b></td><td>Location fit and incentive navigator; state benchmark dashboards</td><td>Entrants, states</td><td>State contracts; entrants free</td></tr>
+<tr><td><b>18 months +</b></td><td>Provider delivery records; RFP routing; peer benchmarks</td><td>Everyone</td><td>Flat-fee verified profiles; disclosed referral fees</td></tr>
+</table>
+<p style="font-size:28px;line-height:1.45;color:#4A5560;width:1500px">Pricing is a hypothesis to test in the first 30 days: a Signals seat priced against one won mandate, which for a broker or recruiter is worth far more than a year's subscription.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A737D">No revenue line pays for position. Profiles are flat-fee and ranked by evidence only.</p>
+<aside class="notes">Phase one is deliberately narrow: six cities, the providers who most need leads, and a public index to build the brand. The index becomes the number journalists and states cite, which is the cheapest marketing there is.</aside>
+</section>
+<section class="slide" id="position" data-transition="fade" style="background:#2F47C9;color:#F4F5F2;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:56px;justify-content:center">
+<p style="font-size:24px;color:#DCE1FB;letter-spacing:2px;text-transform:uppercase;font-weight:600">The positioning</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:96px;font-weight:600;line-height:1.05;color:#F4F5F2">The record, not another report.</h2>
+<p style="font-size:36px;line-height:1.45;color:#EEF0FC;width:1500px">For anyone making a decision about India's GCCs, Kendra is the evidence ledger that names every GCC and shows the source behind every number. Unlike consultant reports, it is a list you can check. Unlike brokers and advisors, it does not sell the answer it gives.</p>
+<aside class="notes">Positioning against three alternatives: reports (aggregate, annual, unverifiable), advisors and brokers (useful but conflicted), and generic databases like Tracxn or LinkedIn (not GCC-aware, no entity resolution across Indian filings). Kendra is neutral, granular, and current.</aside>
+</section>
+<section class="slide" id="why" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The positioning · why each stakeholder comes</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">A different reason to switch for each player</h2>
+</div>
+<table style="font-size:24px;color:#2A3540;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:18%">Stakeholder</th><th style="width:30%">Uses today</th><th style="width:52%">Why Kendra instead</th></tr>
+<tr><td><b>Entrant</b></td><td>Referrals, one Big 4 study</td><td>A neutral shortlist of cities and partners, with evidence, in an afternoon, free</td></tr>
+<tr><td><b>Provider</b></td><td>LinkedIn trawling, bought lists</td><td>Signals months before the press release, tied to the right legal entity</td></tr>
+<tr><td><b>State government</b></td><td>Consultant studies, MoU counts</td><td>A live benchmark against other states and a list of companies to court</td></tr>
+<tr><td><b>GCC leader</b></td><td>Paid surveys, peer chats</td><td>Peer benchmarks and a profile they can correct with evidence</td></tr>
+<tr><td><b>Media, consultants</b></td><td>Their own surveys</td><td>A citable, open-method base to build on, so they can skip the counting</td></tr>
+</table>
+<aside class="notes">Note that consultants and media are positioned as users, not competitors. If Kendra becomes the base that reports cite, every report markets Kendra.</aside>
+</section>
+<section class="slide" id="neutrality" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">The positioning · the moat</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Neutrality is the moat, so it is written down</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:32px 56px">
+<div style="display:flex;flex-direction:column;gap:10px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">No pay-to-rank, ever</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Providers can pay for a profile and data access. Never for a position.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">Every number links to evidence</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Gaps are shown as gaps. Conflicting claims stay visible.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">Anyone can correct</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Corrections need evidence. The change log is public.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">Open method</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Definitions are switchable: companies or centres, with or without mid-market.</p></div>
+</div>
+<aside class="notes">The flywheel: corrections from GCCs and providers improve the ledger, a better ledger attracts more entrants, more entrants make a verified profile more valuable to providers, and their evidence improves the ledger again.</aside>
+</section>
+<section class="slide" id="proto" data-transition="fade" style="background:#15202B;color:#E7EBEE;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#8C9CFF;letter-spacing:2px;text-transform:uppercase;font-weight:600">The prototype</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1;color:#E7EBEE">It works today: seven views on one ledger</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px"><img src="img/count.png" alt="Count reconciliation view comparing published GCC counts" style="width:533px;height:333px;object-fit:cover;border-radius:12px"><h3 style="font-size:30px;font-weight:600;color:#E7EBEE">How many GCCs?</h3><p style="font-size:24px;line-height:1.4;color:#C9D1D8">Every published figure side by side, with unit and date.</p></div>
+<div style="display:flex;flex-direction:column;gap:16px"><img src="img/entity.png" alt="Entity ledger drawer showing claims, sources and confidence" style="width:533px;height:333px;object-fit:cover;border-radius:12px"><h3 style="font-size:30px;font-weight:600;color:#E7EBEE">Entity ledger</h3><p style="font-size:24px;line-height:1.4;color:#C9D1D8">Aliases, claims, sources and confidence; conflicts stay visible.</p></div>
+<div style="display:flex;flex-direction:column;gap:16px"><img src="img/ingest.png" alt="AI ingestion view turning a press release into claims and a ledger diff" style="width:533px;height:333px;object-fit:cover;border-radius:12px"><h3 style="font-size:30px;font-weight:600;color:#E7EBEE">AI ingestion</h3><p style="font-size:24px;line-height:1.4;color:#C9D1D8">Document in; claims, entity match and ledger diff out.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#AAB4BE">Also: Registry · Coming next · Location fit · Provider records · Ask Kendra. Repo: gcc/index.html. Company records are fictional sample data.</p>
+<aside class="notes">The AI runs three ways: on Claude inside claude.ai using the viewer's account, on an Anthropic API key anywhere else, or on an offline rule engine so the demo never breaks. Ask Kendra is a real tool-using agent: Claude calls search_registry, compare_cities, rank_cities, find_providers and upcoming_gccs, and the answer shows which tools it used. Market figures are real and cited; company, provider and signal records are fictional on purpose, so nothing in the demo is a false claim about a real company.</aside>
+</section>
+<section class="slide" id="risks" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">What could break this</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">Five risks, each with a 30-day test</h2>
+</div>
+<table style="font-size:24px;color:#2A3540;font-family:'IBM Plex Sans', Arial, sans-serif">
+<tr><th style="width:36%">Risk</th><th style="width:64%">How we'd test or contain it</th></tr>
+<tr><td><b>Providers won't pay for signals</b></td><td>Hand-build 50 upcoming GCCs; sell 10 paid pilots to brokers and recruiters</td></tr>
+<tr><td><b>Entity matching isn't accurate enough</b></td><td>Hand-label 500 filings and articles; publish only above 95% precision</td></tr>
+<tr><td><b>Incumbents publish their lists</b></td><td>Their lists feed services they sell; neutrality and speed are hard for them to copy</td></tr>
+<tr><td><b>Provider revenue erodes trust</b></td><td>Written charter, ranking separate from revenue, public change log</td></tr>
+<tr><td><b>Data access limits</b></td><td>Official filings, state data and licensed feeds; no scraping behind logins</td></tr>
+</table>
+<aside class="notes">The first risk is the one that matters most. If ten providers won't pay for a hand-built list, the automated version won't save the business. The 30-day sprint is designed to answer that before any serious engineering.</aside>
+</section>
+<section class="slide" id="method" data-transition="fade" style="background:#F4F5F2;color:#15202B;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;color:#2F47C9;letter-spacing:2px;text-transform:uppercase;font-weight:600">How this was made</p>
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:64px;font-weight:600;line-height:1.1">AI for research, sparring and building; judgement on top</h2>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px">
+<div style="display:flex;flex-direction:column;gap:14px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">Research</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">AI web research across Nasscom–Zinnov, EY, ANSR, ICRA, ANAROCK and state policy notes. Every figure in the deck kept with its source; conflicts kept, not smoothed.</p></div>
+<div style="display:flex;flex-direction:column;gap:14px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">Sparring</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Opportunities scored against four tests and argued both ways. The "data is unresolved, not missing" reframe came from noticing the 2,117 vs 3,728 gap.</p></div>
+<div style="display:flex;flex-direction:column;gap:14px;border-top:2px solid #2F47C9;padding:20px 0 0 0"><h3 style="font-size:34px;font-weight:600">Building</h3><p style="font-size:26px;line-height:1.45;color:#4A5560">Prototype built with Claude and run on Claude: extraction to typed claims, and a tool-using analyst. Deterministic maths wherever a number reaches a user.</p></div>
+</div>
+<aside class="notes">Fabricated precision is the failure mode of AI-made strategy work. The rule here was simple: anything stated as a fact has a source; anything estimated says so; anything illustrative is labelled.</aside>
+</section>
+<section class="slide" id="close" data-transition="fade" style="background:#15202B;color:#E7EBEE;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<p style="font-size:24px;color:#8C9CFF;letter-spacing:2px;text-transform:uppercase;font-weight:600">Next</p>
+<div style="display:flex;flex-direction:column;gap:32px">
+<h2 style="font-family:'Source Serif 4', Georgia, serif;font-size:120px;font-weight:600;line-height:1.05;color:#E7EBEE">Every number, with its source.</h2>
+<p style="font-size:36px;line-height:1.45;color:#C9D1D8;width:1400px">First step: a 30-day sprint. Hand-build the ledger for 50 upcoming GCCs, sell 10 provider pilots, and measure matching precision on 500 labelled records.</p>
+</div>
+<p style="font-size:28px;color:#AAB4BE">Kendra · deck and working prototype</p>
+<aside class="notes">Thank you. The prototype is in the repo at gcc/index.html and runs as a page in Claude, with the AI features live.</aside>
+</section>
+
+</div>
+<div id="bar">← → to navigate · <span id="n"></span></div>
+<script>
+const s=[...document.querySelectorAll('.slide')];let i=Math.max(0,Math.min(s.length-1,(parseInt(location.hash.slice(1))||1)-1));
+function fit(){const k=Math.min(innerWidth/1920,innerHeight/1080);const st=document.getElementById('stage');st.style.transform=`scale(${k}) translate(-50%,-50%)`;st.style.left='50%';st.style.top='50%';st.style.transform=`translate(-50%,-50%) scale(${k})`;st.style.transformOrigin='center center'}
+function show(){s.forEach((x,j)=>x.classList.toggle('on',j===i));document.getElementById('n').textContent=(i+1)+' / '+s.length;history.replaceState(null,'','#'+(i+1))}
+addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key))i=Math.min(s.length-1,i+1);if(['ArrowLeft','PageUp'].includes(e.key))i=Math.max(0,i-1);show()});
+addEventListener('click',e=>{i=e.clientX>innerWidth/2?Math.min(s.length-1,i+1):Math.max(0,i-1);show()});
+addEventListener('resize',fit);fit();show();
+</script></body></html>
